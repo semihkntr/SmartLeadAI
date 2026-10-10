@@ -17,18 +17,27 @@ def init_db(app):
             CREATE TABLE IF NOT EXISTS leads (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 isim TEXT NOT NULL,
-                email TEXT NOT NULL, 
+                telefon TEXT NOT NULL,
+                email TEXT, 
                 mesaj TEXT,
                 tarih TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        
+        # Daha önceki denemelerimizde tablo telefonsuz oluştuysa diye güvenlik yaması
+        try:
+            db.execute("ALTER TABLE leads ADD COLUMN telefon TEXT DEFAULT '-'")
+        except:
+            pass # Sütun zaten varsa sessizce devam et
+            
         db.commit()
 
-def lead_ekle(isim, email, mesaj=""):
+# Artık hem telefon (zorunlu) hem de email (opsiyonel) parametrelerini alıyor
+def lead_ekle(isim, telefon, email="", mesaj=""):
     db = get_db()
     db.execute(
-        'INSERT INTO leads (isim, email, mesaj) VALUES (?, ?, ?)',
-        (isim, email, mesaj)
+        'INSERT INTO leads (isim, telefon, email, mesaj) VALUES (?, ?, ?, ?)',
+        (isim, telefon, email, mesaj)
     )
     db.commit()
 
