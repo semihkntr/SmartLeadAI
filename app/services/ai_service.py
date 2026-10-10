@@ -1,4 +1,4 @@
-import requests
+-import requests
 import os
 from config import config_dict
 
@@ -12,8 +12,10 @@ class AIService:
         env = os.environ.get('FLASK_ENV', 'development')
         self.config = config_dict.get(env, config_dict['default'])
         self.api_key = self.config.GROQ_API_KEY
+        # URL düzeltildi (grog yerine groq)
         self.api_url = "https://api.groq.com/openai/v1/chat/completions"
-        self.model = "llama-3.1-8b-instant"
+        # Daha stabil yanıtlar için garantili model seçildi
+        self.model = "llama3-8b-8192"
 
     def _sistem_talimatini_al(self):
         """Config'den yapay zeka kişiliğini (BUSINESS_CONTEXT) okur."""
