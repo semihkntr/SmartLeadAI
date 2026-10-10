@@ -46,16 +46,16 @@ def sohbet():
 def yeni_lead():
     veri = request.get_json()
 
-    # telefon yerine email kontrolü
-    if not veri or 'isim' not in veri or 'email' not in veri:
-        return jsonify({'basari': False, 'hata': 'İsim ve email alanları zorunludur.'}), 400
+    # Yönergeye uygun olarak email yerine telefon kontrolü
+    if not veri or 'isim' not in veri or 'telefon' not in veri:
+        return jsonify({'basari': False, 'hata': 'İsim ve telefon alanları zorunludur.'}), 400
 
     isim = veri['isim']
-    email = veri['email'] # telefon yerine email alıyoruz
+    telefon = veri['telefon'] # email yerine telefon alıyoruz
     mesaj = veri.get('mesaj', '')
 
     try:
-        lead_ekle(isim, email, mesaj)
+        lead_ekle(isim, telefon, mesaj)
         return jsonify({'basari': True, 'mesaj': 'Kaydınız başarıyla alındı.'}), 201
     except Exception as e:
         return jsonify({'basari': False, 'hata': 'Kayıt sırasında bir hata oluştu.'}), 500
