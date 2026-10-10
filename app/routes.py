@@ -37,6 +37,8 @@ def sohbet():
         yanit = ai_service.yanit_uret(mesaj, gecmis)
         return jsonify({'basari': True, 'cevap': yanit}), 200
     except AIServiceError as e:
+        # HATAYI KONSOLA YAZDIRACAK OLAN SATIR BURAYA EKLENDİ
+        print(f"Yapay Zeka Hatasi Detayi: {str(e)}")
         # AI hatası olursa 503 Service Unavailable ve kibar bir mesaj
         return jsonify({'basari': False, 'hata': 'Şu anda asistan hizmet veremiyor, lütfen daha sonra tekrar deneyin.'}), 503
 
