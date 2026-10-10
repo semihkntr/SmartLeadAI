@@ -8,29 +8,27 @@ class AIServiceError(Exception):
 
 class AIService:
     def __init__(self):
-        # Ortam değişkenine göre doğru config sınıfını alıyoruz
         env = os.environ.get('FLASK_ENV', 'development')
         self.config = config_dict.get(env, config_dict['default'])
         self.api_key = self.config.GROQ_API_KEY
-        # URL düzeltildi (grog yerine groq)
         self.api_url = "https://api.groq.com/openai/v1/chat/completions"
-        # Daha stabil yanıtlar için garantili model seçildi
         self.model = "llama3-8b-8192"
 
     def _sistem_talimatini_al(self):
-        """Config'den yapay zeka kişiliğini (BUSINESS_CONTEXT) okur."""
-        return self.config.BUSINESS_CONTEXT
+        """Config'den yapay zeka kişiliğini okur. Render'da boşsa çökmeyi önlemek için varsayılan metin atar."""
+        context = getattr(self.config, 'BUSINESS_CONTEXT', None)
+        if not context:
+            return "Sen SeaSoftware için çalışan yardımsever, profesyonel bir asistansın ve Türkçe konuşuyorsun."
+        return context
 
     def yanit_uret(self, mesaj, gecmis=None):
-        """Kullanıcı mesajını Groq API'sine gönderir ve yanıtı döndürür."""
         if gecmis is None:
             gecmis = []
 
-        # Demo Modu: API anahtarı yoksa çökmek yerine demo mesajı dön.
         if not self.api_key or self.api_key == 'anahtar-yok':
-            return "Demo Modu: Merhaba, ben SeaSoft asistanıyım. (API anahtarı girilmediği için otomatik yanıt veriyorum.)"
+            return "Demo Modu: Merhaba, ben SeaSoft asistanıyım."
 
-        # Mesaj dizilimi: Sistem talimatı (system) -> Geçmiş -> Yeni Mesaj (user)
+        # Sistem mesajının içeriği kesinlikle string olmalı, boş olursa 400 hatası verir
         messages = [{"role": "system", "content": self._sistem_talimatini_al()}]
         
         for g_mesaj in gecmis:
@@ -50,14 +48,17 @@ class AIService:
 
         try:
             response = requests.post(self.api_url, headers=headers, json=data)
-            response.raise_for_status() # HTTP hatalarını yakalar
+            
+            # Eğer 200 Başarılı dışında bir yanıt gelirse (örn: 400 Bad Request), asıl sebebi yakala
+            if response.status_code != 200:
+                raise Exception(f"Groq API Reddedildi ({response.status_code}): {response.text}")
+                
+            response.raise_for_status() 
             
             yanit_verisi = response.json()
             return yanit_verisi['choices'][0]['message']['content']
             
         except Exception as e:
-            # Hataları yakalayıp kibarca fırlatıyoruz
             raise AIServiceError(f"Yapay zeka ile iletişim kurulamadı: {str(e)}")
 
-# Dosyanın sonunda tek bir örnek (instance) oluşturuyoruz
 ai_service = AIService()
