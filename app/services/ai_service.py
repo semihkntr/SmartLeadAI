@@ -12,7 +12,8 @@ class AIService:
         self.config = config_dict.get(env, config_dict['default'])
         self.api_key = self.config.GROQ_API_KEY
         self.api_url = "https://api.groq.com/openai/v1/chat/completions"
-        self.model = "llama3-8b-8192"
+        # BENİM HATAM DÜZELTİLDİ: Senin orijinal güncel modeline geri döndük
+        self.model = "llama-3.1-8b-instant"
 
     def _sistem_talimatini_al(self):
         """Config'den yapay zeka kişiliğini okur. Render'da boşsa çökmeyi önlemek için varsayılan metin atar."""
@@ -28,7 +29,6 @@ class AIService:
         if not self.api_key or self.api_key == 'anahtar-yok':
             return "Demo Modu: Merhaba, ben SeaSoft asistanıyım."
 
-        # Sistem mesajının içeriği kesinlikle string olmalı, boş olursa 400 hatası verir
         messages = [{"role": "system", "content": self._sistem_talimatini_al()}]
         
         for g_mesaj in gecmis:
@@ -49,7 +49,6 @@ class AIService:
         try:
             response = requests.post(self.api_url, headers=headers, json=data)
             
-            # Eğer 200 Başarılı dışında bir yanıt gelirse (örn: 400 Bad Request), asıl sebebi yakala
             if response.status_code != 200:
                 raise Exception(f"Groq API Reddedildi ({response.status_code}): {response.text}")
                 
