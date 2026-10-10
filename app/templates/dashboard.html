@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SeaSoft - Yönetim Paneli</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f4f9; margin: 0; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #1a1a1a; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #e0e0e0; padding: 12px; text-align: left; }
+        th { background-color: #000; color: #fff; font-weight: 600; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f1f1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SeaSoft Müşteri Talepleri (Leads)</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>İsim Soyisim</th>
+                    <th>E-posta / Telefon</th>
+                    <th>Tarih</th>
+                    <th>Mesaj</th>
+                </tr>
+            </thead>
+            <tbody id="leadTablosu">
+                <tr><td colspan="5" style="text-align: center;">Veriler sunucudan yükleniyor...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Arka plandaki API'mizden verileri çekiyoruz
+            fetch('/api/leads')
+                .then(response => response.json())
+                .then(data => {
+                    const tablo = document.getElementById('leadTablosu');
+                    tablo.innerHTML = ''; // Yükleniyor yazısını temizle
+
+                    if(data.basari && data.leads.length > 0) {
+                        data.leads.forEach(lead => {
+                            // Backend'de eskiden telefon, yeni versiyonda email alıyorduk. İkisini de kapsayalım.
+                            let iletisim = lead.email || lead.telefon || "-";
+                            let mesaj = lead.mesaj || "-";
+                            
+                            let satir = `<tr>
+                                <td>#${lead.id}</td>
+                                <td><strong>${lead.isim}</strong></td>
+                                <td>${iletisim}</td>
+                                <td>${lead.tarih}</td>
+                                <td>${mesaj}</td>
+                            </tr>`;
+                            tablo.innerHTML += satir;
+                        });
+                    } else {
+                        tablo.innerHTML = '<tr><td colspan="5" style="text-align: center;">Henüz hiçbir kayıt bulunmuyor.</td></tr>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Hata:', error);
+                    document.getElementById('leadTablosu').innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Veriler çekilirken bir hata oluştu!</td></tr>';
+                });
+        });
+    </script>
+</body>
+</html>
