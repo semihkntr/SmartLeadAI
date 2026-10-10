@@ -13,7 +13,7 @@ class AIService:
         self.api_key = self.config.GROQ_API_KEY
         self.api_url = "https://api.groq.com/openai/v1/chat/completions"
         # BENİM HATAM DÜZELTİLDİ: Senin orijinal güncel modeline geri döndük
-        self.model = "llama-3.1-8b-instant"
+        self.model = "openai/gpt-oss-20b"
 
     def _sistem_talimatini_al(self):
         """Config'den yapay zeka kişiliğini okur. Render'da boşsa çökmeyi önlemek için varsayılan metin atar."""
