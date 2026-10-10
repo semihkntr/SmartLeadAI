@@ -1,10 +1,15 @@
 import sqlite3
+import os
 from flask import g
+
+# Dosyanın bulunduğu klasörü (app) ve bir üst dizini bularak veritabanı yolunu sabitliyoruz
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, '..', 'leads.db')
 
 def get_db():
     # Veritabanı bağlantısı henüz kurulmadıysa yeni bir tane oluşturur
     if 'db' not in g:
-        g.db = sqlite3.connect('leads.db')
+        g.db = sqlite3.connect(DB_PATH)
         # Sütun adlarıyla verilere erişebilmek için Row factory kullanıyoruz
         g.db.row_factory = sqlite3.Row
     return g.db
@@ -24,15 +29,19 @@ def init_db(app):
             )
         ''')
         
-        # Daha önceki denemelerimizde tablo telefonsuz oluştuysa diye güvenlik yaması
+        # Daha önceki denemelerimizde tablo telefonsuz veya emailsiz oluştuysa diye güvenlik yaması
         try:
             db.execute("ALTER TABLE leads ADD COLUMN telefon TEXT DEFAULT '-'")
         except:
-            pass # Sütun zaten varsa sessizce devam et
+            pass
+            
+        try:
+            db.execute("ALTER TABLE leads ADD COLUMN email TEXT DEFAULT '-'")
+        except:
+            pass
             
         db.commit()
 
-# Artık hem telefon (zorunlu) hem de email (opsiyonel) parametrelerini alıyor
 def lead_ekle(isim, telefon, email="", mesaj=""):
     db = get_db()
     db.execute(
