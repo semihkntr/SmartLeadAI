@@ -53,7 +53,7 @@ pip install -r requirements.txt
 
 
 4. Çevre Değişkenlerini Ayarlayın:
-Ana dizinde bir .env dosyası oluşturun ve gizli anahtarlarınızı ekleyin (Bu dosya güvenliğiniz için GitHub'a yüklenmemelidir):
+Ana dizinde bir .env dosyası oluşturun ve gizli anahtarlarınızı ekleyin:
 
 GROQ_API_KEY=gsk_sizin_anahtariniz
 SECRET_KEY=gizli_anahtar
