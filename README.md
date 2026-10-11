@@ -1,6 +1,6 @@
 
 
-# 🚀 SeaSoft SmartLead AI
+# 🚀 SeaSoftware SmartLead AI
 
 ## 📋 Proje Özeti
 **SeaSoft SmartLead AI**, ziyaretçilerle yapay zekâ tabanlı doğal dilde iletişim kuran ve kurumsal iletişim bilgilerini (lead) toplayan uçtan uca bir web sistemidir. Proje, müşteri odaklı bir karşılama sayfası (B2C) ve işletme yöneticilerine özel bir veri paneli (B2B) olmak üzere iki temel arayüzden oluşmaktadır. Sistem, **"Separation of Concerns" (Sorumlulukların Ayrılığı)** prensibine katı bir şekilde bağlı kalınarak modüler bir mimaride geliştirilmiştir.
