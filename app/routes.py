@@ -1,64 +1,71 @@
-from flask import Blueprint, render_template, request, jsonify
+import logging
+import traceback
+from flask import Blueprint, request, jsonify, render_template
 from app.database import lead_ekle, tum_leadler
-from app.services.ai_service import ai_service, AIServiceError
+from app.ai_service import ai_service, AIServiceError
 
 pages_bp = Blueprint('pages', __name__)
 api_bp = Blueprint('api', __name__)
 
-# --- SAYFA ROTALARI ---
-
-@pages_bp.route('/', methods=['GET'])
-def index():
-    return render_template('index.html')
-
 @pages_bp.route('/dashboard', methods=['GET'])
 def dashboard():
+    """Yönetim panelini render eder."""
     return render_template('dashboard.html')
 
-# --- API ROTALARI ---
-
-@api_bp.route('/sohbet', methods=['POST'])
-def sohbet():
-    veri = request.get_json()
-    
-    if not veri or 'mesaj' not in veri:
-        return jsonify({'basari': False, 'hata': 'Mesaj alanı zorunludur.'}), 400
-
-    mesaj = veri['mesaj']
-    gecmis = veri.get('gecmis', [])
-
+@api_bp.route('/chat', methods=['POST'])
+def chat():
+    """Kullanıcıdan gelen mesajı Groq AI servisine iletir ve yanıtı döndürür."""
     try:
-        yanit = ai_service.yanit_uret(mesaj, gecmis)
-        return jsonify({'basari': True, 'cevap': yanit}), 200
+        data = request.get_json()
+        if not data or 'mesaj' not in data:
+            logging.warning("[HTTP 400] /api/chat - Eksik parametre: 'mesaj'")
+            return jsonify({"basari": False, "mesaj": "Eksik parametre: 'mesaj' zorunludur."}), 400
+        
+        kullanici_mesaji = data.get('mesaj')
+        gecmis = data.get('gecmis', [])
+        
+        yanit = ai_service.yanit_uret(kullanici_mesaji, gecmis)
+        return jsonify({"basari": True, "yanit": yanit}), 200
+
     except AIServiceError as e:
-        print(f"Yapay Zeka Hatasi Detayi: {str(e)}")
-        return jsonify({'basari': False, 'hata': 'Şu anda asistan hizmet veremiyor, lütfen daha sonra tekrar deneyin.'}), 503
-
-@api_bp.route('/leads', methods=['POST'])
-def yeni_lead():
-    veri = request.get_json()
-
-    # Yönergeye uygun olarak isim ve telefon ZORUNLU
-    if not veri or 'isim' not in veri or 'telefon' not in veri:
-        return jsonify({'basari': False, 'hata': 'İsim ve telefon alanları zorunludur.'}), 400
-
-    isim = veri['isim']
-    telefon = veri['telefon'] 
-    email = veri.get('email', '') # Email ekstra alan olarak ekleniyor
-    mesaj = veri.get('mesaj', '')
-
-    try:
-        # database.py 4 parametre alacak
-        lead_ekle(isim, telefon, email, mesaj)
-        return jsonify({'basari': True, 'mesaj': 'Kaydınız başarıyla alındı.'}), 201
+        logging.error(f"[HTTP 502] /api/chat - AI Servis Hatası: {str(e)}")
+        return jsonify({"basari": False, "mesaj": str(e)}), 502
     except Exception as e:
-        return jsonify({'basari': False, 'hata': 'Kayıt sırasında bir hata oluştu.'}), 500
+        logging.error(f"[HTTP 500] /api/chat - Sunucu Çökmesi!\nDetay: {traceback.format_exc()}")
+        return jsonify({"basari": False, "mesaj": "Yapay zeka ile iletişim sırasında sunucu hatası oluştu."}), 500
 
 @api_bp.route('/leads', methods=['GET'])
-def leadleri_getir():
+def get_leads():
+    """Dashboard tablosu için veritabanındaki tüm lead'leri JSON olarak gönderir."""
     try:
         kayitlar = tum_leadler()
-        liste = [dict(kayit) for kayit in kayitlar]
-        return jsonify({'basari': True, 'leads': liste}), 200
+        lead_listesi = [
+            {"id": r["id"], "isim": r["isim"], "telefon": r["telefon"], "email": r["email"], "mesaj": r["mesaj"], "tarih": r["tarih"]} 
+            for r in kayitlar
+        ]
+        return jsonify({"basari": True, "leads": lead_listesi}), 200
     except Exception as e:
-        return jsonify({'basari': False, 'hata': 'Veriler alınamadı.'}), 500
+        logging.error(f"[HTTP 500] /api/leads (GET) - Veritabanı Çekme Hatası!\nDetay: {traceback.format_exc()}")
+        return jsonify({"basari": False, "mesaj": "Veriler çekilirken hata oluştu."}), 500
+
+@api_bp.route('/leads', methods=['POST'])
+def create_lead():
+    """SeaSoft AI botundan veya Velo'dan gelen yeni müşteri (lead) taleplerini kaydeder."""
+    try:
+        data = request.get_json()
+        if not data or 'isim' not in data:
+            logging.warning("[HTTP 400] /api/leads (POST) - Eksik parametre: 'isim'")
+            return jsonify({"basari": False, "mesaj": "Eksik parametre: 'isim' zorunludur."}), 400
+        
+        isim = data.get('isim')
+        telefon = data.get('telefon', '-')
+        email = data.get('email', '-')
+        mesaj = data.get('mesaj', '-')
+        
+        lead_ekle(isim, telefon, email, mesaj)
+        logging.info(f"[BAŞARILI] Yeni Lead Eklendi: {isim}")
+        return jsonify({"basari": True, "mesaj": "Kayıt başarıyla oluşturuldu."}), 201
+
+    except Exception as e:
+        logging.error(f"[HTTP 500] /api/leads (POST) - Kayıt Eklenirken Hata!\nDetay: {traceback.format_exc()}")
+        return jsonify({"basari": False, "mesaj": "Kayıt eklenirken sunucu hatası oluştu."}), 500
