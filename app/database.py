@@ -43,7 +43,7 @@ def lead_ekle(isim: str, telefon: str = "-", email: str = "", mesaj: str = "") -
         db.commit()
     except Exception as e:
         logging.error(f"[DB HATASI] lead_ekle fonksiyonu çöktü!\nDetay: {traceback.format_exc()}")
-        raise # Hatayı routes.py'a fırlatır ki HTTP 500 döndürebilsin
+        raise 
 
 def tum_leadler() -> List[sqlite3.Row]:
     try:

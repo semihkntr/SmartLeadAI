@@ -35,20 +35,23 @@ def chat():
         return jsonify({"basari": False, "mesaj": "Yapay zeka ile iletişim sırasında sunucu hatası oluştu."}), 500
 
 @api_bp.route('/leads', methods=['GET'])
+@api_bp.route('/adaylar', methods=['GET'])
 def get_leads():
-    """Dashboard tablosu için veritabanındaki tüm lead'leri JSON olarak gönderir."""
+    """Dashboard tablosu için veritabanındaki tüm lead'leri hem /leads hem de /adaylar adresinden gönderir."""
     try:
         kayitlar = tum_leadler()
         lead_listesi = [
             {"id": r["id"], "isim": r["isim"], "telefon": r["telefon"], "email": r["email"], "mesaj": r["mesaj"], "tarih": r["tarih"]} 
             for r in kayitlar
         ]
-        return jsonify({"basari": True, "leads": lead_listesi}), 200
+        # Wix Velo kodunun sorunsuz okuyabilmesi için hem 'leads' hem de 'adaylar' anahtarını döndürüyoruz
+        return jsonify({"basari": True, "leads": lead_listesi, "adaylar": lead_listesi}), 200
     except Exception as e:
-        logging.error(f"[HTTP 500] /api/leads (GET) - Veritabanı Çekme Hatası!\nDetay: {traceback.format_exc()}")
+        logging.error(f"[HTTP 500] /api/leads & /adaylar (GET) - Veritabanı Çekme Hatası!\nDetay: {traceback.format_exc()}")
         return jsonify({"basari": False, "mesaj": "Veriler çekilirken hata oluştu."}), 500
 
 @api_bp.route('/leads', methods=['POST'])
+@api_bp.route('/adaylar', methods=['POST'])
 def create_lead():
     """SeaSoft AI botundan veya Velo'dan gelen yeni müşteri (lead) taleplerini kaydeder."""
     try:
