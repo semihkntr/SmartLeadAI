@@ -72,3 +72,14 @@ def create_lead():
     except Exception as e:
         logging.error(f"[HTTP 500] /api/leads (POST) - Kayıt Eklenirken Hata!\nDetay: {traceback.format_exc()}")
         return jsonify({"basari": False, "mesaj": "Kayıt eklenirken sunucu hatası oluştu."}), 500
+
+@api_bp.route('/sil/<int:lead_id>', methods=['GET'])
+def lead_sil(lead_id):
+    import sqlite3
+    # Veritabanı dosyanızın yolunu kendi projenize göre ayarlayın (örn: akilli_satis.db)
+    baglanti = sqlite3.connect('akilli_satis.db')
+    imlec = baglanti.cursor()
+    imlec.execute('DELETE FROM musteri_adaylari WHERE id = ?', (lead_id,))
+    baglanti.commit()
+    baglanti.close()
+    return f"ID numarası {lead_id} olan kayıt silindi!", 200
